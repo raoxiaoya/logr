@@ -13,7 +13,7 @@ import (
 var (
 	DefaultCallerDepth = 3
 	levelFlags         = []string{"DEBUG", "INFO", "WARN", "ERROR", "FATAL"}
-	logrInstance       *logr
+	Logrer             *logr
 	dayFormat          = "20060102"
 	setuponce          sync.Once
 )
@@ -57,16 +57,16 @@ func Setup(lc Config) error {
 			lc.Encoding = "plain"
 		}
 
-		logrInstance = &logr{config: lc}
+		Logrer = &logr{config: lc}
 
-		if f, e := MustOpen(logrInstance.getLogFileName(), lc.FilePath); e == nil {
-			logrInstance.logFile = f
+		if f, e := MustOpen(Logrer.getLogFileName(), lc.FilePath); e == nil {
+			Logrer.logFile = f
 		} else {
 			err = e
 			return
 		}
 
-		logrInstance.logger = log.New(logrInstance.logFile, "", log.LstdFlags)
+		Logrer.logger = log.New(Logrer.logFile, "", log.LstdFlags)
 	})
 
 	return err
@@ -119,46 +119,46 @@ func (l *logr) Printf(format string, v ...interface{}) {
 }
 
 func SetPrintfFunc(f PrintfFunc) {
-	if logrInstance == nil {
+	if Logrer == nil {
 		Setup(Config{PrintfFunc: f})
 	} else {
-		logrInstance.config.PrintfFunc = f
+		Logrer.config.PrintfFunc = f
 	}
 }
 
 func write(level Level, v ...interface{}) {
-	if logrInstance == nil {
+	if Logrer == nil {
 		Setup(Config{})
 	}
 
-	logrInstance.setLinePrefix(level)
-	logrInstance.setLogFile()
+	Logrer.setLinePrefix(level)
+	Logrer.setLogFile()
 
 	switch level {
 	case DEBUG, INFO, WARN, ERROR:
-		logrInstance.logger.Println(v...)
+		Logrer.logger.Println(v...)
 	case FATAL:
-		logrInstance.logger.Fatalln(v...)
+		Logrer.logger.Fatalln(v...)
 	default:
-		logrInstance.logger.Println(v...)
+		Logrer.logger.Println(v...)
 	}
 }
 
 func writef(level Level, format string, v ...interface{}) {
-	if logrInstance == nil {
+	if Logrer == nil {
 		Setup(Config{})
 	}
 
-	logrInstance.setLinePrefix(level)
-	logrInstance.setLogFile()
+	Logrer.setLinePrefix(level)
+	Logrer.setLogFile()
 
 	switch level {
 	case DEBUG, INFO, WARN, ERROR:
-		logrInstance.logger.Printf(format+"\n", v...)
+		Logrer.logger.Printf(format+"\n", v...)
 	case FATAL:
-		logrInstance.logger.Fatalf(format+"\n", v...)
+		Logrer.logger.Fatalf(format+"\n", v...)
 	default:
-		logrInstance.logger.Printf(format+"\n", v...)
+		Logrer.logger.Printf(format+"\n", v...)
 	}
 }
 
